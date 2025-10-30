@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import { ArrowRight, TrendingUp } from "lucide-react"
 
 export function Hero() {
@@ -22,12 +23,14 @@ export function Hero() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="text-base">
-                Start Saving Today
-                <ArrowRight className="ml-2 h-5 w-5" />
+              <Button size="lg" className="text-base" asChild>
+                <Link href="/client/register">
+                  Start Saving Today
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-base bg-transparent">
-                Watch Demo
+              <Button size="lg" variant="outline" className="text-base bg-transparent" asChild>
+                <Link href="/client/login">Watch Demo</Link>
               </Button>
             </div>
 

@@ -11,18 +11,18 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 export default function Page() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (!loading && isAuthenticated && user) {
       if (user.role === 'admin') {
         router.push('/admin/dashboard');
       } else {
         router.push('/client/dashboard');
       }
     }
-  }, [isAuthenticated, user, router]);
+  }, [loading, isAuthenticated, user, router]);
 
   return (
     <div className="min-h-screen">

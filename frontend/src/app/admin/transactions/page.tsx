@@ -10,30 +10,35 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, XCircle, Clock, Search, Filter } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CheckCircle, XCircle, Clock, Search, Filter, Calendar } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
 export default function AdminTransactionsPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('all');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   useEffect(() => {
+    if (loading) return;
     if (!user || user.role !== 'admin') {
       router.push('/admin/login');
       return;
     }
     loadTransactions();
-  }, [user, router]);
+  }, [loading, user, router]);
 
   useEffect(() => {
     filterTransactions();
-  }, [transactions, searchTerm, statusFilter, typeFilter]);
+  }, [transactions, searchTerm, statusFilter, typeFilter, activeTab, startDate, endDate]);
 
   const loadTransactions = async () => {
     try {
@@ -42,7 +47,7 @@ export default function AdminTransactionsPage() {
     } catch (error) {
       console.error('Failed to load transactions:', error);
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
   };
 
@@ -57,12 +62,34 @@ export default function AdminTransactionsPage() {
       );
     }
 
+    if (activeTab === 'deposits') {
+      filtered = filtered.filter(t => t.type === 'deposit');
+    } else if (activeTab === 'withdrawals') {
+      filtered = filtered.filter(t => t.type === 'withdrawal');
+    } else if (activeTab === 'recent') {
+      filtered = [...filtered]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 20);
+    }
+
     if (statusFilter !== 'all') {
       filtered = filtered.filter(transaction => transaction.status === statusFilter);
     }
 
     if (typeFilter !== 'all') {
       filtered = filtered.filter(transaction => transaction.type === typeFilter);
+    }
+
+    if (startDate) {
+      const start = new Date(startDate);
+      filtered = filtered.filter(t => new Date(t.createdAt) >= start);
+    }
+
+    if (endDate) {
+      const end = new Date(endDate);
+      // Include end date entire day
+      end.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(t => new Date(t.createdAt) <= end);
     }
 
     setFilteredTransactions(filtered);
@@ -81,7 +108,7 @@ export default function AdminTransactionsPage() {
     }
   };
 
-  if (loading) {
+  if (dataLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -107,8 +134,16 @@ export default function AdminTransactionsPage() {
         </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="deposits">Deposits</TabsTrigger>
+            <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
+            <TabsTrigger value="recent">Recent</TabsTrigger>
+          </TabsList>
+
         {/* Filters */}
-        <Card className="mb-6">
+          <Card className="mb-2">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Filter className="h-5 w-5 mr-2" />
@@ -116,13 +151,13 @@ export default function AdminTransactionsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-medium">Search</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                    placeholder="Search transactions..."
+                      placeholder="Search by id, user, description..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -158,6 +193,16 @@ export default function AdminTransactionsPage() {
                 </SelectContent>
               </Select>
               </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2"><Calendar className="h-4 w-4" /> From</label>
+                  <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2"><Calendar className="h-4 w-4" /> To</label>
+                  <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                </div>
             </div>
           </CardContent>
         </Card>
@@ -222,6 +267,7 @@ export default function AdminTransactionsPage() {
             </Table>
           </CardContent>
         </Card>
+        </Tabs>
       </div>
     </div>
   );

@@ -3,14 +3,17 @@ import { UserService } from '../services/userService';
 import { TransactionService } from '../services/transactionService';
 import { asyncHandler, createError } from '../middlewares/error';
 import { TransactionResponseDto, BalanceResponseDto, CreateTransactionDto, UpdateDeviceDto } from '../dtos/transaction.dto';
+import { SessionService } from '../services/sessionService';
 
 export class ClientController {
   private userService: UserService;
   private transactionService: TransactionService;
+  private sessionService: SessionService;
 
   constructor() {
     this.userService = new UserService();
     this.transactionService = new TransactionService();
+    this.sessionService = new SessionService();
   }
 
   private formatTransactionResponse(transaction: any): TransactionResponseDto {
@@ -99,5 +102,17 @@ export class ClientController {
     }
 
     res.json({ message: 'Device ID updated successfully' });
+  });
+
+  deleteAccount = asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user.userId;
+    // Invalidate all sessions for the user
+    this.sessionService.invalidateUserSessions(userId);
+    // Delete the user (cascades to transactions and sessions via Prisma schema)
+    const ok = await this.userService.deleteUser(userId);
+    if (!ok) {
+      throw createError('Failed to delete account', 500);
+    }
+    res.json({ message: 'Account deleted successfully' });
   });
 }

@@ -129,6 +129,11 @@ export class RateLimiter {
       activeEntries: activeCount
     };
   }
+
+  // Clear all rate limit entries (for development/testing)
+  clear(): void {
+    this.requests.clear();
+  }
 }
 
 // Create different rate limiters for different endpoints
@@ -139,13 +144,13 @@ export const authRateLimiter = new RateLimiter({
 });
 
 export const generalRateLimiter = new RateLimiter({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  maxRequests: 100, // 100 requests per 15 minutes
+  windowMs: process.env.NODE_ENV === 'development' ? 5 * 60 * 1000 : 15 * 60 * 1000, // 5 min dev, 15 min prod
+  maxRequests: process.env.NODE_ENV === 'development' ? 2000 : 100, // generous in dev
   message: 'Too many requests, please try again later'
 });
 
 export const strictRateLimiter = new RateLimiter({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  maxRequests: 10, // 10 requests per 5 minutes
+  windowMs: process.env.NODE_ENV === 'development' ? 5 * 60 * 1000 : 5 * 60 * 1000,
+  maxRequests: process.env.NODE_ENV === 'development' ? 200 : 10,
   message: 'Too many requests, please slow down'
 });

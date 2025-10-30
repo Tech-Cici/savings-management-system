@@ -12,7 +12,7 @@ export interface User {
 export interface LoginCredentials {
   email: string;
   password: string;
-  deviceId?: string;
+  otp?: string;
 }
 
 export interface RegisterData {
@@ -40,6 +40,11 @@ class AuthService {
       throw new Error(error.message || 'Login failed');
     }
 
+    const sessionId = response.headers.get('X-Session-ID');
+    if (sessionId) {
+      localStorage.setItem('sessionId', sessionId);
+    }
+
     return response.json();
   }
 
@@ -57,31 +62,41 @@ class AuthService {
       throw new Error(error.message || 'Registration failed');
     }
 
+    const sessionId = response.headers.get('X-Session-ID');
+    if (sessionId) {
+      localStorage.setItem('sessionId', sessionId);
+    }
+
     return response.json();
   }
 
   async logout(): Promise<void> {
     const token = localStorage.getItem('token');
+    const sessionId = localStorage.getItem('sessionId');
     if (token) {
       await fetch(`${this.baseUrl}/api/auth/logout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
+          ...(sessionId ? { 'X-Session-ID': sessionId } : {}),
         },
       });
     }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('sessionId');
   }
 
   async getCurrentUser(): Promise<User | null> {
     const token = localStorage.getItem('token');
+    const sessionId = localStorage.getItem('sessionId');
     if (!token) return null;
 
     try {
       const response = await fetch(`${this.baseUrl}/api/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          ...(sessionId ? { 'X-Session-ID': sessionId } : {}),
         },
       });
 

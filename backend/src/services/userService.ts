@@ -69,9 +69,9 @@ export class UserService {
       return null;
     }
 
-    // For clients, check if device is verified
+    // For clients, require admin verification
     if (user.role === 'client' && !user.isVerified) {
-      throw new Error('Account not verified. Please contact admin for device verification.');
+      throw new Error('Account not verified. Please wait for admin verification.');
     }
 
     return user;
@@ -87,5 +87,9 @@ export class UserService {
 
   async getAdmins(): Promise<User[]> {
     return this.userRepository.findAdmins();
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    return this.userRepository.delete(id);
   }
 }

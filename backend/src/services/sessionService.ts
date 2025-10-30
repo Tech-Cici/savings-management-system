@@ -12,7 +12,7 @@ export interface Session {
 
 export class SessionService {
   private sessions: Map<string, Session> = new Map();
-  private readonly SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
+  private readonly SESSION_TIMEOUT = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
   private readonly MAX_SESSIONS_PER_USER = 3; // Maximum concurrent sessions per user
 
   constructor() {

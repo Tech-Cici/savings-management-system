@@ -29,6 +29,9 @@ export class TransactionService {
     // For withdrawals, check if user has sufficient balance
     if (transactionData.type === 'withdrawal') {
       if (!user.balance || user.balance < transactionData.amount) {
+        // Create a failed transaction to log the attempt and reason
+        const failed = await this.transactionRepository.create(transactionData);
+        await this.updateTransaction(failed.id, { status: 'failed', description: 'Insufficient balance' });
         throw new Error('Insufficient balance');
       }
     }
@@ -65,7 +68,8 @@ export class TransactionService {
 
     } catch (error) {
       // Mark transaction as failed
-      await this.updateTransaction(transaction.id, { status: 'failed' });
+      const reason = error instanceof Error ? error.message : 'Processing error';
+      await this.updateTransaction(transaction.id, { status: 'failed', description: reason });
       throw error;
     }
   }

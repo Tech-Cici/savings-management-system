@@ -35,9 +35,9 @@ app.get('/health', (req, res) => {
 if (process.env.NODE_ENV === 'development') {
   app.post('/api/dev/clear-rate-limits', (req, res) => {
     // Clear all rate limit entries
-    authRateLimiter.requests.clear();
-    generalRateLimiter.requests.clear();
-    strictRateLimiter.requests.clear();
+    authRateLimiter.clear();
+    generalRateLimiter.clear();
+    strictRateLimiter.clear();
     res.json({ message: 'Rate limits cleared' });
   });
 }
@@ -45,6 +45,8 @@ if (process.env.NODE_ENV === 'development') {
 // Authentication routes (with strict rate limiting)
 app.post('/api/auth/login', authRateLimiter.middleware, authController.login);
 app.post('/api/auth/register', authRateLimiter.middleware, authController.register);
+app.post('/api/auth/resend-login-otp', generalRateLimiter.middleware, authController.resendLoginOtp);
+app.post('/api/auth/verify-email', generalRateLimiter.middleware, authController.verifyEmail);
 app.post('/api/auth/logout', generalRateLimiter.middleware, authController.logout);
 app.get('/api/auth/me', generalRateLimiter.middleware, authenticateToken, authController.getCurrentUser);
 
@@ -52,6 +54,7 @@ app.get('/api/auth/me', generalRateLimiter.middleware, authenticateToken, authCo
 app.get('/api/admin/customers', generalRateLimiter.middleware, authenticateToken, requireAdmin, adminController.getCustomers);
 app.get('/api/admin/customers/:id', generalRateLimiter.middleware, authenticateToken, requireAdmin, adminController.getCustomer);
 app.post('/api/admin/customers/:id/verify', generalRateLimiter.middleware, authenticateToken, requireAdmin, adminController.verifyCustomer);
+app.post('/api/admin/customers/:id/reject', generalRateLimiter.middleware, authenticateToken, requireAdmin, adminController.rejectCustomer);
 app.get('/api/admin/transactions', generalRateLimiter.middleware, authenticateToken, requireAdmin, adminController.getTransactions);
 app.get('/api/admin/dashboard/stats', generalRateLimiter.middleware, authenticateToken, requireAdmin, adminController.getDashboardStats);
 
@@ -61,6 +64,7 @@ app.get('/api/client/balance', generalRateLimiter.middleware, authenticateToken,
 app.post('/api/client/deposit', strictRateLimiter.middleware, authenticateToken, requireClient, clientController.deposit);
 app.post('/api/client/withdraw', strictRateLimiter.middleware, authenticateToken, requireClient, clientController.withdraw);
 app.put('/api/client/device', generalRateLimiter.middleware, authenticateToken, requireClient, clientController.updateDeviceId);
+app.delete('/api/client/account', strictRateLimiter.middleware, authenticateToken, requireClient, clientController.deleteAccount);
 
 // Error handling middleware
 app.use(errorHandler);

@@ -7,6 +7,7 @@ export interface User {
   deviceId?: string;
   balance?: number;
   isVerified?: boolean;
+  emailVerified?: boolean;
   createdAt: Date;
   updatedAt: Date;
   lastLogin?: Date;
@@ -26,5 +27,6 @@ export interface UpdateUserData {
   deviceId?: string;
   balance?: number;
   isVerified?: boolean;
+  emailVerified?: boolean;
   lastLogin?: Date;
 }

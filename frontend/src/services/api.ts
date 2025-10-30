@@ -34,12 +34,14 @@ class ApiService {
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const token = localStorage.getItem('token');
+    const sessionId = localStorage.getItem('sessionId');
     
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` }),
+        ...(sessionId && { 'X-Session-ID': sessionId }),
         ...options.headers,
       },
     });
